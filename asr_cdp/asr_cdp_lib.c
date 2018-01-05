@@ -979,7 +979,6 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 {
 	int seg_start_pos;
 	int word_index, sound_index;
-	int best_sound_index;
 	int number_of_states, state_index;
 	int i, j, segment_start, segment_size, min_segment_size, max_segment_size;
 	float quality, best_quality;
@@ -990,7 +989,6 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 		number_of_states = references_vocabulary[word_index].n + 2;
 		for (state_index = 1; state_index < (number_of_states - 1); ++state_index)
 		{
-			best_sound_index = 0;
 			segment_start = 0;
 			for (j = 0; j < state_index; ++j)
 			{
