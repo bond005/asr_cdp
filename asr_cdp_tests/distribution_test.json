@@ -1,0 +1,98 @@
+{
+    "validation": {
+        "silence": [
+            "_background_noise_\\silence04.fbanks",
+            "_background_noise_\\silence05.fbanks"
+        ],
+        "speech": {
+            "first": [
+                {
+                    "source": "first\\first04.fbanks"
+                },
+                {
+                    "source": "first\\first05.fbanks"
+                }
+            ],
+            "third": [
+                {
+                    "source": "third\\third04.fbanks"
+                },
+                {
+                    "source": "third\\third05.fbanks"
+                }
+            ],
+            "second": [
+                {
+                    "source": "second\\second04.fbanks"
+                },
+                {
+                    "source": "second\\second05.fbanks"
+                }
+            ]
+        }
+    },
+    "train": {
+        "silence": [
+            "_background_noise_\\silence01.fbanks",
+            "_background_noise_\\silence02.fbanks",
+            "_background_noise_\\silence03.fbanks"
+        ],
+        "speech": {
+            "first": [
+                {
+                    "source": "first\\first01.fbanks"
+                },
+                {
+                    "source": "first\\first02.fbanks"
+                },
+                {
+                    "source": "first\\first03.fbanks"
+                }
+            ],
+            "third": [
+                {
+                    "source": "third\\third01.fbanks"
+                },
+                {
+                    "source": "third\\third02.fbanks"
+                },
+                {
+                    "source": "third\\third03.fbanks"
+                }
+            ],
+            "second": [
+                {
+                    "source": "second\\second01.fbanks"
+                },
+                {
+                    "source": "second\\second02.fbanks"
+                },
+                {
+                    "source": "second\\second03.fbanks"
+                }
+            ]
+        }
+    },
+    "test": {
+        "silence": [
+            "_background_noise_\\silence06.fbanks"
+        ],
+        "speech": {
+            "first": [
+                {
+                    "source": "first\\first06.fbanks"
+                }
+            ],
+            "third": [
+                {
+                    "source": "third\\third06.fbanks"
+                }
+            ],
+            "second": [
+                {
+                    "source": "second\\second06.fbanks"
+                }
+            ]
+        }
+    }
+}
