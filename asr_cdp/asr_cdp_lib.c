@@ -2278,6 +2278,44 @@ int find_word(char* source_word, char** interesting_words, int number_of_interes
 	return res;
 }
 
+char* strip_line(char* source_line)
+{
+	int i, j;
+	i = 0;
+	while (source_line[i] != NULL)
+	{
+		if ((source_line[i] != ' ') && (source_line[i] > 13))
+		{
+			break;
+		}
+		i++;
+	}
+	if (source_line[i] == NULL)
+	{
+		source_line[0] = NULL;
+	}
+	else
+	{
+		j = i + 1;
+		while (source_line[j] != NULL)
+		{
+			j++;
+		}
+		j--;
+		while (j > i)
+		{
+			if ((source_line[j] != ' ') && (source_line[j] > 13))
+			{
+				break;
+			}
+			j--;
+		}
+		source_line[j + 1] = NULL;
+		memmove(&source_line[0], &source_line[i], (j - i + 2) * sizeof(char));
+	}
+	return source_line;
+}
+
 int load_interesting_words(char* filename, char*** interesting_words, int* number_of_interesting_words)
 {
 	int i, n, len;
@@ -2292,7 +2330,7 @@ int load_interesting_words(char* filename, char*** interesting_words, int* numbe
 	n = 0;
 	while (fgets(buffer, BUFFER_SIZE - 1, fp) != NULL)
 	{
-		if (strlen(buffer) > 0)
+		if (strlen(strip_line(buffer)) > 0)
 		{
 			n += 1;
 		}
@@ -2335,6 +2373,7 @@ int load_interesting_words(char* filename, char*** interesting_words, int* numbe
 			fprintf(stderr, "List of interesting words from the file `%s` is wrong!\n", filename);
 			break;
 		}
+		strip_line(buffer);
 		len = strlen(buffer);
 		if (len > 0)
 		{

@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "CuTest.h"
 #include "../asr_cdp/asr_cdp_lib.h"
@@ -350,6 +351,9 @@ int actual_spectrogram_feature_vector_size;
 TTrainDataForWord *actual_train_words;
 TTrainDataForWord actual_train_silences;
 int actual_number_of_train_words;
+
+char** interesting_words;
+int number_of_interesting_words;
 
 void test_calculate_similarity(CuTest *tc)
 {
@@ -1169,6 +1173,52 @@ void test_load_train_data_04(CuTest *tc)
 	}
 }
 
+void test_strip_line_01(CuTest *tc)
+{
+	char buffer[1024];
+	memset(buffer, 0, 1024 * sizeof(char));
+	strcpy(buffer, "Hello, world!");
+	CuAssertStrEquals(tc, "Hello, world!", strip_line(buffer));
+}
+
+void test_strip_line_02(CuTest *tc)
+{
+	char buffer[1024];
+	memset(buffer, 0, 1024 * sizeof(char));
+	strcpy(buffer, "\tHello, world! \n");
+	CuAssertStrEquals(tc, "Hello, world!", strip_line(buffer));
+}
+
+void test_strip_line_03(CuTest *tc)
+{
+	char buffer[1024];
+	memset(buffer, 0, 1024 * sizeof(char));
+	strcpy(buffer, "                                 Hello, world! \r\n");
+	CuAssertStrEquals(tc, "Hello, world!", strip_line(buffer));
+}
+
+void test_load_interesting_words(CuTest *tc)
+{
+	int i, ok;
+	char *expected[] = {
+		"yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go"
+	};
+	int expected_n = 10;
+	if (interesting_words != NULL)
+	{
+		finalize_interesting_words(interesting_words, number_of_interesting_words);
+		interesting_words = NULL;
+		number_of_interesting_words = 0;
+	}
+	ok = load_interesting_words("interesting_words_test.txt", &interesting_words, &number_of_interesting_words);
+	CuAssertTrue(tc, ok);
+	CuAssertIntEquals(tc, expected_n, number_of_interesting_words);
+	for (i = 0; i < expected_n; ++i)
+	{
+		CuAssertStrEquals(tc, expected[i], interesting_words[i]);
+	}
+}
+
 CuSuite* ASR_CDP_GetSuite()
 {
 	CuSuite* suite = CuSuiteNew();
@@ -1200,6 +1250,10 @@ CuSuite* ASR_CDP_GetSuite()
 	SUITE_ADD_TEST(suite, test_load_train_data_02);
 	SUITE_ADD_TEST(suite, test_load_train_data_03);
 	SUITE_ADD_TEST(suite, test_load_train_data_04);
+	SUITE_ADD_TEST(suite, test_strip_line_01);
+	SUITE_ADD_TEST(suite, test_strip_line_02);
+	SUITE_ADD_TEST(suite, test_strip_line_03);
+	SUITE_ADD_TEST(suite, test_load_interesting_words);
 	return suite;
 }
 
@@ -1218,6 +1272,8 @@ void RunAllTests(void)
 
 int main(void)
 {
+	interesting_words = NULL;
+	number_of_interesting_words = 0;
 	actual_reference_words = NULL;
 	actual_reference_silences = NULL;
 	actual_vocabulary_size = 0;
@@ -1253,5 +1309,11 @@ int main(void)
 		actual_number_of_train_words = 0;
 	}
 	finalize_train_data_for_word(actual_train_silences);
+	if (interesting_words != NULL)
+	{
+		finalize_interesting_words(interesting_words, number_of_interesting_words);
+		interesting_words = NULL;
+		number_of_interesting_words = 0;
+	}
 	remove(references_file_name);
 }

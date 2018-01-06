@@ -95,6 +95,8 @@ int load_train_data(char* filename, char* basedir, char* datapart,
 
 int find_word(char* source_word, char** interesting_words, int number_of_interesting_words);
 
+char* strip_line(char* source_line);
+
 int load_interesting_words(char* filename, char*** interesting_words, int* number_of_interesting_words);
 
 void finalize_interesting_words(char** interesting_words, int number_of_interesting_words);
