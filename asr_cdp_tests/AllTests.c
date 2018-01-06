@@ -829,7 +829,7 @@ void test_io_references(CuTest *tc)
 	}
 }
 
-void test_load_spectrogram(CuTest *tc)
+void test_load_spectrogram_01(CuTest *tc)
 {
 #ifdef _WIN32
 	char *filename = "testdata\\first\\first01.fbanks.bin";
@@ -872,6 +872,28 @@ void test_load_spectrogram(CuTest *tc)
 	for (i = 0; i < (expected_ft_size * expected_spec_size); ++i)
 	{
 		CuAssertDblEquals(tc, expected_data[i], actual_spectrogram[i], 1e-5);
+	}
+}
+
+void test_load_spectrogram_02(CuTest *tc)
+{
+	char *filename = "94e6864f_nohash_0.wav.fbanks.bin";
+	int ok, i;
+	int expected_spec_size = 98;
+	int expected_ft_size = 32;
+	if (actual_spectrogram != NULL)
+	{
+		free(actual_spectrogram);
+		actual_spectrogram = NULL;
+	}
+	ok = load_spectrogram(filename, &actual_spectrogram, &actual_spectrogram_length,
+		&actual_spectrogram_feature_vector_size);
+	CuAssertTrue(tc, ok);
+	CuAssertIntEquals(tc, expected_spec_size, actual_spectrogram_length);
+	CuAssertIntEquals(tc, expected_ft_size, actual_spectrogram_feature_vector_size);
+	for (i = 0; i < (expected_ft_size * expected_spec_size); ++i)
+	{
+		CuAssertTrue(tc, actual_spectrogram[i] >= 0.0);
 	}
 }
 
@@ -1243,7 +1265,8 @@ CuSuite* ASR_CDP_GetSuite()
 	SUITE_ADD_TEST(suite, test_join_and_prepare_filename_02);
 	SUITE_ADD_TEST(suite, test_join_and_prepare_filename_03);
 	SUITE_ADD_TEST(suite, test_io_references);
-	SUITE_ADD_TEST(suite, test_load_spectrogram);
+	SUITE_ADD_TEST(suite, test_load_spectrogram_01);
+	SUITE_ADD_TEST(suite, test_load_spectrogram_02);
 	SUITE_ADD_TEST(suite, test_find_word_01);
 	SUITE_ADD_TEST(suite, test_find_word_02);
 	SUITE_ADD_TEST(suite, test_load_train_data_01);
