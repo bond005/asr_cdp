@@ -1729,7 +1729,7 @@ char* join_and_prepare_filename(char *basedir, char* filename)
 	filename[i + 1] = 'b';
 	filename[i + 2] = 'i';
 	filename[i + 3] = 'n';
-	filename[i + 4] = NULL;
+	filename[i + 4] = 0;
 	return filename;
 }
 
@@ -1747,16 +1747,19 @@ int load_spectrogram(char* filename, float** spectrogram,
 	if (fread(&a, sizeof(int32_t), 1, fp) != 1)
 	{
 		fprintf(stderr, "File `%s` is wrong!\n", filename);
+		fclose(fp);
 		return 0;
 	}
 	if (fread(&b, sizeof(int32_t), 1, fp) != 1)
 	{
 		fprintf(stderr, "File `%s` is wrong!\n", filename);
+		fclose(fp);
 		return 0;
 	}
 	if ((a <= 0) || (b <= 0))
 	{
 		fprintf(stderr, "Spectrogram from the file `%s` is wrong!\n", filename);
+		fclose(fp);
 		return 0;
 	}
 	*spectrogram_size = a;
@@ -1765,6 +1768,7 @@ int load_spectrogram(char* filename, float** spectrogram,
 	if (*spectrogram == NULL)
 	{
 		fprintf(stderr, "Out of memory!\n");
+		fclose(fp);
 		return 0;
 	}
 	if (fread(*spectrogram, sizeof(float), *spectrogram_size * *feature_vector_size, fp) != 
@@ -1772,6 +1776,7 @@ int load_spectrogram(char* filename, float** spectrogram,
 	{
 		fprintf(stderr, "File `%s` is wrong!\n", filename);
 		free(*spectrogram);
+		fclose(fp);
 		return 0;
 	}
 	for (i = 0; i < (*spectrogram_size * *feature_vector_size); ++i)
@@ -1786,8 +1791,10 @@ int load_spectrogram(char* filename, float** spectrogram,
 	{
 		fprintf(stderr, "Spectrogram from the file `%s` is wrong!\n", filename);
 		free(*spectrogram);
+		fclose(fp);
 		return 0;
 	}
+	fclose(fp);
 	return 1;
 }
 
