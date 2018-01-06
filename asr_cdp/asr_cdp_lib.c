@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <float.h>
 #include <math.h>
 #include <malloc.h>
@@ -217,7 +218,7 @@ int recognize_all(TSpectrogram spectrograms[], int spectrograms_number,
 		fp = fopen(output_file, "w");
 		if (fp == NULL)
 		{
-			fprintf(stderr, "File `%s` cannot be opened for writing!\n", output_file);
+			fprintf(stderr, "File `%s` cannot be opened for writing!\n%s\n", output_file, strerror(errno));
 			return 0;
 		}
 	}
@@ -1184,7 +1185,7 @@ int load_references(char* filename, TReference** references, int* vocabulary_siz
 	fp = fopen(filename, "r");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "File `%s` cannot be opened for reading!\n", filename);
+		fprintf(stderr, "File `%s` cannot be opened for reading!\n%s", filename, strerror(errno));
 		free(file_contents);
 		return 0;
 	}
@@ -1525,7 +1526,7 @@ int save_references(char* filename, TReference references[], int vocabulary_size
 	FILE* fp = fopen(filename, "w");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "File `%s` cannot be opened for writing!\n", filename);
+		fprintf(stderr, "File `%s` cannot be opened for writing!\n%s\n", filename, strerror(errno));
 		return 0;
 	}
 	fprintf(fp, "{\n");
@@ -1740,7 +1741,7 @@ int load_spectrogram(char* filename, float** spectrogram,
 	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "File `%s` cannot be opened for reading!\n", filename);
+		fprintf(stderr, "File `%s` cannot be opened for reading!\n%s\n", filename, strerror(errno));
 		return 0;
 	}
 	if (fread(&a, sizeof(int32_t), 1, fp) != 1)
@@ -1800,7 +1801,7 @@ int load_list_of_spectrograms(char* filename, char* basedir,
 	FILE *fp = fopen(filename, "r");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "File `%s` cannot be opened for reading!\n", filename);
+		fprintf(stderr, "File `%s` cannot be opened for reading!\n%s\n", filename, strerror(errno));
 		return 0;
 	}
 	memset(buffer, 0, BUFFER_SIZE);
@@ -1935,7 +1936,7 @@ int load_train_data(char* filename, char* basedir, char* datapart,
 	fp = fopen(filename, "r");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "File `%s` cannot be opened for reading!\n", filename);
+		fprintf(stderr, "File `%s` cannot be opened for reading!\n%s\n", filename, strerror(errno));
 		free(file_contents);
 		return 0;
 	}
@@ -2282,7 +2283,7 @@ char* strip_line(char* source_line)
 {
 	int i, j;
 	i = 0;
-	while (source_line[i] != NULL)
+	while (source_line[i] != 0)
 	{
 		if ((source_line[i] != ' ') && (source_line[i] > 13))
 		{
@@ -2290,14 +2291,14 @@ char* strip_line(char* source_line)
 		}
 		i++;
 	}
-	if (source_line[i] == NULL)
+	if (source_line[i] == 0)
 	{
-		source_line[0] = NULL;
+		source_line[0] = 0;
 	}
 	else
 	{
 		j = i + 1;
-		while (source_line[j] != NULL)
+		while (source_line[j] != 0)
 		{
 			j++;
 		}
@@ -2310,7 +2311,7 @@ char* strip_line(char* source_line)
 			}
 			j--;
 		}
-		source_line[j + 1] = NULL;
+		source_line[j + 1] = 0;
 		memmove(&source_line[0], &source_line[i], (j - i + 2) * sizeof(char));
 	}
 	return source_line;
@@ -2323,7 +2324,7 @@ int load_interesting_words(char* filename, char*** interesting_words, int* numbe
 	FILE *fp = fopen(filename, "r");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "File `%s` cannot be opened for reading!\n", filename);
+		fprintf(stderr, "File `%s` cannot be opened for reading!\n%s\n", filename, strerror(errno));
 		return 0;
 	}
 	memset(buffer, 0, BUFFER_SIZE);
