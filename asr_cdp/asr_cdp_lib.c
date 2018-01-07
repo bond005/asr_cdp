@@ -989,7 +989,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 	}
 	quality = 0.0;
 	seg_start_pos = 0;
-	printf("Self-segmentation is started...");
+	printf("Self-segmentation is started...\n");
 	for (word_index = 0; word_index < vocabulary_size; ++word_index)
 	{
 		res[word_index].n = number_of_states[word_index] - 2;
