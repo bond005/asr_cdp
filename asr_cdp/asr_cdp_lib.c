@@ -38,28 +38,68 @@ float calculate_similarity(float spectrogram[], int spectrogram_size, int featur
 }
 
 float find_reference_spectrum(float spectrogram[], int spectrogram_size, int feature_vector_size,
-	float reference_spectrum[])
+	float reference_spectrum[], float tmp_dist_matrix[])
 {
-	int i, start_pos = 0, reference_spectrum_ind = 0;
-	float res;
-	float best_res = calculate_similarity(spectrogram, spectrogram_size, feature_vector_size,
-		&spectrogram[start_pos]);
-	for (i = 1, start_pos = feature_vector_size; i < spectrogram_size; ++i, start_pos += feature_vector_size)
+	int i, j, start_pos_1, start_pos_2, spectrum_ind, reference_spectrum_ind = 0;
+	float res, best_res, dist, tmp;
+	tmp_dist_matrix[0] = 0.0;
+	best_res = 0.0;
+	for (i = 1, start_pos_2 = feature_vector_size; i < spectrogram_size; ++i, start_pos_2 += feature_vector_size)
 	{
-		res = calculate_similarity(spectrogram, spectrogram_size, feature_vector_size,
-			&spectrogram[start_pos]);
+		dist = 0.0;
+		for (j = 0; j < feature_vector_size; ++j)
+		{
+			tmp = spectrogram[start_pos_2 + j] - spectrogram[j];
+			dist += tmp * tmp;
+		}
+		dist = sqrt(dist);
+		tmp_dist_matrix[i] = dist;
+		best_res -= dist;
+	}
+	for (spectrum_ind = 1; spectrum_ind < spectrogram_size; ++spectrum_ind)
+	{
+		res = 0.0;
+		start_pos_1 = spectrum_ind * feature_vector_size;
+		for (i = 0, start_pos_2 = 0; i < spectrogram_size; ++i, start_pos_2 += feature_vector_size)
+		{
+			if (i == spectrum_ind)
+			{
+				tmp_dist_matrix[spectrum_ind * spectrogram_size + i] = 0.0;
+				dist = 0.0;
+			}
+			else
+			{
+				if (i < spectrum_ind)
+				{
+					dist = tmp_dist_matrix[i * spectrogram_size + spectrum_ind];
+					tmp_dist_matrix[spectrum_ind * spectrogram_size + i] = dist;
+				}
+				else
+				{
+					dist = 0.0;
+					for (j = 0; j < feature_vector_size; ++j)
+					{
+						tmp = spectrogram[start_pos_2 + j] - spectrogram[j + start_pos_1];
+						dist += tmp * tmp;
+					}
+					dist = sqrt(dist);
+					tmp_dist_matrix[spectrum_ind * spectrogram_size + i] = dist;
+				}
+			}
+			res -= dist;
+		}
 		if (res > best_res)
 		{
 			best_res = res;
-			reference_spectrum_ind = i;
+			reference_spectrum_ind = spectrum_ind;
 		}
 	}
 	if (reference_spectrum != NULL)
 	{
-		start_pos = reference_spectrum_ind * feature_vector_size;
+		start_pos_1 = reference_spectrum_ind * feature_vector_size;
 		for (i = 0; i < feature_vector_size; ++i)
 		{
-			reference_spectrum[i] = spectrogram[start_pos + i];
+			reference_spectrum[i] = spectrogram[start_pos_1 + i];
 		}
 	}
 	return best_res;
@@ -440,7 +480,7 @@ float do_segmentation(float spectrogram[], int spectrogram_size, int feature_vec
 
 float do_self_segmentation(float spectrogram[], int spectrogram_size, int feature_vector_size,
 	float silence_spectrums[], int number_of_silences, int speech_segments_number,
-	int lengths_of_segments[], float dp_matrix[], int dp_matrix_for_lengths[])
+	int lengths_of_segments[], float dp_matrix[], int dp_matrix_for_lengths[], float tmp_dist_matrix[])
 {
 	int silence_index, time_index, state_index, states_number;
 	int m, M, u;
@@ -481,7 +521,7 @@ float do_self_segmentation(float spectrogram[], int spectrogram_size, int featur
 					dp_matrix_for_lengths[time_index * states_number + state_index] = m;
 					dp_matrix[time_index * states_number + state_index] = F + find_reference_spectrum(
 						&spectrogram[(time_index - m + 1) * feature_vector_size],
-						m, feature_vector_size, NULL);
+						m, feature_vector_size, NULL, tmp_dist_matrix);
 					for (u = m + 1; u <= M; u++)
 					{
 						if ((time_index - u) < 0)
@@ -496,7 +536,7 @@ float do_self_segmentation(float spectrogram[], int spectrogram_size, int featur
 						{
 							val = F + find_reference_spectrum(
 								&spectrogram[(time_index - u + 1) * feature_vector_size],
-								u, feature_vector_size, NULL);
+								u, feature_vector_size, NULL, tmp_dist_matrix);
 							if (val > dp_matrix[time_index * states_number + state_index])
 							{
 								dp_matrix[time_index * states_number + state_index] = val;
@@ -735,7 +775,8 @@ int evaluate(TTrainDataForWord test_data[], int all_words_number,
 
 float* create_references_for_silences(TTrainDataForWord train_data, int feature_vector_size)
 {
-	int i, start_pos = 0;
+	int i, start_pos = 0, max_spectrogram_size = 0;
+	float *tmp_dist_matrix;
 	float *res = (float*)malloc(feature_vector_size * train_data.n * sizeof(float));
 	if (res == NULL)
 	{
@@ -744,10 +785,26 @@ float* create_references_for_silences(TTrainDataForWord train_data, int feature_
 	}
 	for (i = 0; i < train_data.n; ++i)
 	{
-		find_reference_spectrum(train_data.spectrograms[i].spectrogram, train_data.spectrograms[i].n,
-			feature_vector_size, &res[start_pos]);
-		start_pos += feature_vector_size;
+		if (train_data.spectrograms[i].n > max_spectrogram_size)
+		{
+			max_spectrogram_size = train_data.spectrograms[i].n;
+		}
 	}
+	tmp_dist_matrix = (float*)malloc(max_spectrogram_size * max_spectrogram_size * sizeof(float));
+	if (tmp_dist_matrix == NULL)
+	{
+		fprintf(stderr, "Out of memory!\n");
+		free(res);
+		return NULL;
+	}
+	for (i = 0; i < train_data.n; ++i)
+	{
+		find_reference_spectrum(train_data.spectrograms[i].spectrogram, train_data.spectrograms[i].n,
+			feature_vector_size, &res[start_pos], tmp_dist_matrix);
+		start_pos += feature_vector_size;
+		printf("Reference spectrum for sound %d from %d has been successfully calculated...\n", i + 1, train_data.n);
+	}
+	free(tmp_dist_matrix);
 	return res;
 }
 
@@ -760,7 +817,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 	int seg_start_pos;
 	int word_index, sound_index, state_index, restart_index;
 	int max_spectrogram_length = 0, max_number_of_states = 0;
-	float *dp_matrix, *tmp_spectrum;
+	float *dp_matrix, *tmp_spectrum, *tmp_dist_matrix;
 	int *dp_matrix_for_lengths, *number_of_states;
 	int *old_segmentation, *new_segmentation;
 	float quality;
@@ -819,6 +876,15 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 		free(number_of_states);
 		return NULL;
 	}
+	tmp_dist_matrix = (float*)malloc(max_spectrogram_length * max_spectrogram_length * sizeof(float));
+	if (tmp_dist_matrix == NULL)
+	{
+		fprintf(stderr, "Out of memory!\n");
+		free(old_segmentation);
+		free(new_segmentation);
+		free(number_of_states);
+		return NULL;
+	}
 	res = (TReference*)malloc(vocabulary_size * sizeof(TReference));
 	if (res == NULL)
 	{
@@ -826,6 +892,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 		free(old_segmentation);
 		free(new_segmentation);
 		free(number_of_states);
+		free(tmp_dist_matrix);
 		return NULL;
 	}
 	for (word_index = 0; word_index < vocabulary_size; ++word_index)
@@ -841,6 +908,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 		free(old_segmentation);
 		free(new_segmentation);
 		free(number_of_states);
+		free(tmp_dist_matrix);
 		finalize_references(res, vocabulary_size);
 		return NULL;
 	}
@@ -854,6 +922,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 		free(number_of_states);
 		finalize_references(res, vocabulary_size);
 		free(dp_matrix);
+		free(tmp_dist_matrix);
 		return NULL;
 	}
 	tmp_spectrum = (float*)malloc(feature_vector_size * sizeof(float));
@@ -866,6 +935,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 		finalize_references(res, vocabulary_size);
 		free(dp_matrix);
 		free(dp_matrix_for_lengths);
+		free(tmp_dist_matrix);
 		return NULL;
 	}
 	quality = 0.0;
@@ -914,7 +984,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 				train_data[word_index].spectrograms[sound_index].n, feature_vector_size,
 				silence_spectrums, number_of_silences, number_of_states[word_index] - 2,
 				&old_segmentation[seg_start_pos + sound_index * number_of_states[word_index]],
-				dp_matrix, dp_matrix_for_lengths);
+				dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
 		}
 		seg_start_pos += train_data[word_index].n * number_of_states[word_index];
 	}
@@ -928,10 +998,11 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 		free(dp_matrix);
 		free(dp_matrix_for_lengths);
 		free(tmp_spectrum);
+		free(tmp_dist_matrix);
 		return NULL;
 	}
 	select_best_references_for_words(train_data, vocabulary_size, feature_vector_size, old_segmentation,
-		tmp_spectrum, res);
+		tmp_spectrum, res, tmp_dist_matrix);
 	printf("Quality of self-segmentation is %f.\n\n", quality);
 	for (restart_index = 1; restart_index <= restarts_number; ++restart_index)
 	{
@@ -952,7 +1023,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 			seg_start_pos += train_data[word_index].n * number_of_states[word_index];
 		}
 		select_best_references_for_words(train_data, vocabulary_size, feature_vector_size, new_segmentation,
-			tmp_spectrum, res);
+			tmp_spectrum, res, tmp_dist_matrix);
 		printf("  - quality of segmentation is %f;\n", quality);
 		segmentation_diff = compare_segmentation(old_segmentation, new_segmentation,
 			train_data, speech_segments_number_for_words, vocabulary_size);
@@ -971,12 +1042,13 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 	free(dp_matrix_for_lengths);
 	free(number_of_states);
 	free(tmp_spectrum);
+	free(tmp_dist_matrix);
 	return res;
 }
 
 void select_best_references_for_words(TTrainDataForWord train_data[],
 	int vocabulary_size, int feature_vector_size, int segmentation[], float tmp_reference_spectrum[],
-	TReference references_vocabulary[])
+	TReference references_vocabulary[], float tmp_dist_matrix[])
 {
 	int seg_start_pos;
 	int word_index, sound_index;
@@ -1002,7 +1074,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 			best_quality = find_reference_spectrum(
 				&train_data[word_index].spectrograms[0].spectrogram[segment_start], segment_size,
 				feature_vector_size,
-				references_vocabulary[word_index].reference[state_index - 1].spectrum);
+				references_vocabulary[word_index].reference[state_index - 1].spectrum, tmp_dist_matrix);
 			for (i = 1; i < train_data[word_index].n; i++)
 			{
 				segment_start = 0;
@@ -1036,7 +1108,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 				segment_size = segmentation[seg_start_pos + sound_index * number_of_states + state_index];
 				quality = find_reference_spectrum(
 					&train_data[word_index].spectrograms[sound_index].spectrogram[segment_start],
-					segment_size, feature_vector_size, tmp_reference_spectrum);
+					segment_size, feature_vector_size, tmp_reference_spectrum, tmp_dist_matrix);
 				for (i = 0; i < train_data[word_index].n; ++i)
 				{
 					if (i == sound_index)

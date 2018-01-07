@@ -384,12 +384,13 @@ void test_find_reference_spectrum(CuTest *tc)
 		0.43753f, 0.15286f, 0.85823f
 	};
 	int i;
+	float tmp_dist_matrix[6 * 6];
 	int spectrogram_size = 6, feature_vector_size = 3;
 	float expected_reference_spectrum[3] = {0.17889f, 0.64864f, 0.58093f};
 	float expected_similarity = -1.993627846127f;
 	float actual_reference_spectrum[3];
 	float actual_similarity = find_reference_spectrum(spectrogram, spectrogram_size, feature_vector_size,
-		actual_reference_spectrum);
+		actual_reference_spectrum, tmp_dist_matrix);
 	CuAssertDblEquals(tc, expected_similarity, actual_similarity, 1e-5);
 	for (i = 0; i < feature_vector_size; ++i)
 	{
@@ -499,13 +500,14 @@ void test_do_segmentation_05(CuTest *tc)
 void test_do_self_segmentation_01(CuTest *tc)
 {
 	int i;
+	float tmp_dist_matrix[22 * 22];
 	float dp_matrix[22 * 6];
 	int lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float expected_similarity = -0.53366988f;
 	float actual_similarity = do_self_segmentation(input_spectrogram, size_of_input_spectrogram,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[2].n, lengths_of_segments, dp_matrix, dp_matrix_for_lengths);
+		reference_words[2].n, lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
 	CuAssertDblEquals(tc, expected_similarity, actual_similarity, 1e-5);
 	for (i = 0; i < 6; ++i)
 	{
@@ -516,13 +518,14 @@ void test_do_self_segmentation_01(CuTest *tc)
 void test_do_self_segmentation_02(CuTest *tc)
 {
 	int i;
+	float tmp_dist_matrix[22 * 22];
 	float dp_matrix[22 * 6];
 	int expected_length_of_segments[] = { 4, 1, 4, 1, 3 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float similarity = do_self_segmentation(train_data[0].spectrograms[0].spectrogram, train_data[0].spectrograms[0].n,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths);
+		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
 	CuAssertTrue(tc, similarity > (-FLT_MAX / 2.0));
 	CuAssertTrue(tc, similarity <= 0.0);
 	for (i = 0; i < (reference_words[0].n + 2); ++i)
@@ -534,13 +537,14 @@ void test_do_self_segmentation_02(CuTest *tc)
 void test_do_self_segmentation_03(CuTest *tc)
 {
 	int i;
+	float tmp_dist_matrix[22 * 22];
 	float dp_matrix[22 * 6];
 	int expected_length_of_segments[] = { 5, 2, 7, 3, 5 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float similarity = do_self_segmentation(train_data[0].spectrograms[1].spectrogram, train_data[0].spectrograms[1].n,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths);
+		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
 	CuAssertTrue(tc, similarity > (-FLT_MAX / 2.0));
 	CuAssertTrue(tc, similarity <= 0.0);
 	for (i = 0; i < (reference_words[0].n + 2); ++i)
@@ -552,13 +556,14 @@ void test_do_self_segmentation_03(CuTest *tc)
 void test_do_self_segmentation_04(CuTest *tc)
 {
 	int i;
+	float tmp_dist_matrix[22 * 22];
 	float dp_matrix[22 * 6];
 	int expected_length_of_segments[] = { 6, 1, 5, 2, 2 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float similarity = do_self_segmentation(train_data[0].spectrograms[2].spectrogram, train_data[0].spectrograms[2].n,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths);
+		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
 	CuAssertTrue(tc, similarity > (-FLT_MAX / 2.0));
 	CuAssertTrue(tc, similarity <= 0.0);
 	for (i = 0; i < (reference_words[0].n + 2); ++i)
@@ -570,13 +575,14 @@ void test_do_self_segmentation_04(CuTest *tc)
 void test_do_self_segmentation_05(CuTest *tc)
 {
 	int i;
+	float tmp_dist_matrix[22 * 22];
 	float dp_matrix[22 * 6];
 	int expected_length_of_segments[] = { 2, 2, 6, 2, 7 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float similarity = do_self_segmentation(train_data[0].spectrograms[3].spectrogram, train_data[0].spectrograms[3].n,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths);
+		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
 	CuAssertTrue(tc, similarity > (-FLT_MAX / 2.0));
 	CuAssertTrue(tc, similarity <= 0.0);
 	for (i = 0; i < (reference_words[0].n + 2); ++i)

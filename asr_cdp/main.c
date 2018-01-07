@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 		finalize_interesting_words(interesting_words, number_of_interesting_words);
+		printf("Data for training have been successfully loaded...\n\n");
 		spectrums_of_silences = create_references_for_silences(spectrograms_of_silence_from_json, feature_vector_size);
 		number_of_silences = spectrograms_of_silence_from_json.n;
 		if (spectrums_of_silences == NULL)
@@ -80,6 +81,7 @@ int main(int argc, char* argv[])
 			finalize_train_data_for_word(spectrograms_of_silence_from_json);
 			return EXIT_FAILURE;
 		}
+		printf("Reference spectrums for all silence sounds have been successfully calculated...\n\n");
 		references_for_words = create_references_for_words(spectrograms_of_words_from_json, NULL,
 			number_of_words_from_json, feature_vector_size, spectrums_of_silences, number_of_silences,
 			20);
@@ -91,6 +93,7 @@ int main(int argc, char* argv[])
 			finalize_train_data_for_word(spectrograms_of_silence_from_json);
 			return EXIT_FAILURE;
 		}
+		printf("\nReferences for all words have been successfully calculated...\n");
 		n = save_references(parsed_args[MODEL_NAME], references_for_words, number_of_words_from_json,
 			feature_vector_size, spectrums_of_silences, number_of_silences);
 		free(spectrums_of_silences);
