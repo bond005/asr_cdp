@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 CC=gcc
-CFLAGS=-c -Wall -O3
+CFLAGS=-c -Wall -m64 -Ofast -flto -march=native -funroll-loops
 LDFLAGS=-lm
 
 all: asr_cdp

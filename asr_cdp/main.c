@@ -39,7 +39,9 @@ int main(int argc, char* argv[])
 	int number_of_interesting_words;
 	char* parsed_args[NUMBER_OF_ARG_TYPES];
 	int n;
-	int mode = parse_cmd(argc, argv, parsed_args);
+	int mode;
+	setbuf(stdout, NULL);
+	mode = parse_cmd(argc, argv, parsed_args);
 	if (mode == 0)
 	{
 		return EXIT_FAILURE;
@@ -71,7 +73,7 @@ int main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 		finalize_interesting_words(interesting_words, number_of_interesting_words);
-		printf("Data for training have been successfully loaded...\n\n");
+		printf("\nData for training have been successfully loaded...\n\n");
 		spectrums_of_silences = create_references_for_silences(spectrograms_of_silence_from_json, feature_vector_size);
 		number_of_silences = spectrograms_of_silence_from_json.n;
 		if (spectrums_of_silences == NULL)
@@ -136,6 +138,7 @@ int main(int argc, char* argv[])
 			finalize_train_data_for_word(spectrograms_of_silence_from_json);
 			return EXIT_FAILURE;
 		}
+		printf("\nData for evaluation have been successfully loaded...\n\n");
 		n = evaluate(spectrograms_of_words_from_json, number_of_words_from_json, feature_vector_size,
 			spectrums_of_silences, number_of_silences, references_for_words, vocabulary_size, 1);
 		finalize_references(references_for_words, vocabulary_size);

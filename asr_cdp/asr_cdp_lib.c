@@ -2224,6 +2224,7 @@ int load_train_data(char* filename, char* basedir, char* datapart,
 			}
 		}
 		train_data_for_silences->spectrograms[i].n = spectrogram_sizes[0];
+		printf("Spectrogram %d of the silence sound has been loaded...\n", i + 1);
 	}
 	if (!ok)
 	{
@@ -2383,6 +2384,7 @@ int load_train_data(char* filename, char* basedir, char* datapart,
 		{
 			break;
 		}
+		printf("Spectrograms of word `%s` have been loaded...\n", (*train_data_for_words)[i].wordname);
 		++i;
 	}
 	json_value_free(value);
