@@ -799,7 +799,7 @@ int evaluate(TTrainDataForWord test_data[], int all_words_number,
 
 float* create_references_for_silences(TTrainDataForWord train_data, int feature_vector_size)
 {
-	int i, j, start_pos = 0, max_spectrogram_size = 0;
+	int i, start_pos = 0, max_spectrogram_size = 0;
 	float *tmp_dist_matrix;
 	int *tmp_filled;
 	float *res = (float*)malloc(feature_vector_size * train_data.n * sizeof(float));

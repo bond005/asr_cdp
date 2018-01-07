@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 CC=gcc
-CFLAGS=-c -Wall
+CFLAGS=-c -Wall -O3
 LDFLAGS=-lm
 
 all: asr_cdp
