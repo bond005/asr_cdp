@@ -322,6 +322,10 @@ int recognize_all(TSpectrogram spectrograms[], int spectrograms_number,
 			free(best_similarities);
 		}
 		fprintf(stderr, "Out of memory!\n");
+		if (output_file == NULL)
+		{
+			fclose(fp);
+		}
 		return 0;
 	}
 	n = 0;
@@ -1129,7 +1133,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 			max_segment_size = segment_size;
 			memset(tmp_filled, 0, segment_size * segment_size * sizeof(int));
 			best_quality = find_reference_spectrum(
-				&train_data[word_index].spectrograms[0].spectrogram[segment_start], 0, segment_size - 1,
+				&(train_data[word_index].spectrograms[0].spectrogram[segment_start]), 0, segment_size - 1,
 				segment_size, feature_vector_size,
 				references_vocabulary[word_index].reference[state_index - 1].spectrum,
 				tmp_dist_matrix, tmp_filled);
@@ -1151,7 +1155,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 					min_segment_size = segment_size;
 				}
 				best_quality += calculate_similarity(
-					&train_data[word_index].spectrograms[i].spectrogram[segment_start], segment_size,
+					&(train_data[word_index].spectrograms[i].spectrogram[segment_start]), segment_size,
 					feature_vector_size,
 					references_vocabulary[word_index].reference[state_index - 1].spectrum);
 			}
@@ -1166,7 +1170,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 				segment_size = segmentation[seg_start_pos + sound_index * number_of_states + state_index];
 				memset(tmp_filled, 0, segment_size * segment_size * sizeof(int));
 				quality = find_reference_spectrum(
-					&train_data[word_index].spectrograms[sound_index].spectrogram[segment_start],
+					&(train_data[word_index].spectrograms[sound_index].spectrogram[segment_start]),
 					0, segment_size - 1, segment_size, feature_vector_size, tmp_reference_spectrum,
 					tmp_dist_matrix, tmp_filled);
 				for (i = 0; i < train_data[word_index].n; ++i)
@@ -1183,7 +1187,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 					segment_start *= feature_vector_size;
 					segment_size = segmentation[seg_start_pos + i * number_of_states + state_index];
 					quality += calculate_similarity(
-						&train_data[word_index].spectrograms[i].spectrogram[segment_start], segment_size,
+						&(train_data[word_index].spectrograms[i].spectrogram[segment_start]), segment_size,
 						feature_vector_size, tmp_reference_spectrum);
 				}
 				if (quality > best_quality)
@@ -2532,6 +2536,7 @@ int load_interesting_words(char* filename, char*** interesting_words, int* numbe
 			i += 1;
 		}
 	}
+	fclose(fp);
 	if (n > 0)
 	{
 		finalize_interesting_words(*interesting_words, *number_of_interesting_words);
