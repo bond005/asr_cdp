@@ -963,8 +963,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 		finalize_references(res, vocabulary_size);
 		return NULL;
 	}
-	dp_matrix_for_lengths = (int*)malloc(max_spectrogram_length * max_number_of_states * 
-		sizeof(int));
+	dp_matrix_for_lengths = (int*)malloc(max_spectrogram_length * max_number_of_states * sizeof(int));
 	if (dp_matrix_for_lengths == NULL)
 	{
 		fprintf(stderr, "Out of memory!\n");
@@ -1014,7 +1013,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 			ok = 0;
 			break;
 		}
-		memset(res[word_index].wordname, 0, strlen(train_data[word_index].wordname) + 1);
+		memset(res[word_index].wordname, 0, (strlen(train_data[word_index].wordname) + 1) * sizeof(char));
 		strcpy(res[word_index].wordname, train_data[word_index].wordname);
 		for (state_index = 0; state_index < res[word_index].n; ++state_index)
 		{
@@ -1817,7 +1816,7 @@ char* join_and_prepare_filename(char *basedir, char* filename)
 		if ((basedir[n1 - 1] == '/') || (basedir[n1 - 1] == '\\'))
 		{
 			memmove(&filename[n1], &filename[0], (n2 + 1) * sizeof(char));
-			memcpy(&filename[0], basedir, n1);
+			memcpy(&filename[0], basedir, n1 * sizeof(char));
 		}
 		else
 		{
@@ -1849,7 +1848,7 @@ char* join_and_prepare_filename(char *basedir, char* filename)
 				}
 			}
 			memmove(&filename[n1 + 1], &filename[0], (n2 + 1) * sizeof(char));
-			memcpy(&filename[0], basedir, n1);
+			memcpy(&filename[0], basedir, n1 * sizeof(char));
 			filename[n1] = c;
 		}
 	}
@@ -1948,14 +1947,14 @@ int load_list_of_spectrograms(char* filename, char* basedir,
 		fprintf(stderr, "File `%s` cannot be opened for reading!\n%s\n", filename, strerror(errno));
 		return 0;
 	}
-	memset(buffer, 0, BUFFER_SIZE);
+	memset(buffer, 0, BUFFER_SIZE * sizeof(char));
 	while (fgets(buffer, BUFFER_SIZE - 1, fp) != NULL)
 	{
 		if (strlen(buffer) > 0)
 		{
 			n += 1;
 		}
-		memset(buffer, 0, BUFFER_SIZE);
+		memset(buffer, 0, BUFFER_SIZE * sizeof(char));
 		if (feof(fp))
 		{
 			break;
@@ -1989,7 +1988,7 @@ int load_list_of_spectrograms(char* filename, char* basedir,
 			fprintf(stderr, "List of spectrograms from the file `%s` is wrong!\n", filename);
 			break;
 		}
-		memset(buffer, 0, BUFFER_SIZE);
+		memset(buffer, 0, BUFFER_SIZE * sizeof(char));
 		if (fgets(buffer, BUFFER_SIZE - 1, fp) == NULL)
 		{
 			fprintf(stderr, "List of spectrograms from the file `%s` is wrong!\n", filename);
@@ -2205,7 +2204,7 @@ int load_train_data(char* filename, char* basedir, char* datapart,
 			fprintf(stderr, "Data from the file `%s` are wrong!\n", filename);
 			break;
 		}
-		memset(buffer, 0, BUFFER_SIZE);
+		memset(buffer, 0, BUFFER_SIZE * sizeof(char));
 		strcpy(buffer, filename_value->u.string.ptr);
 		if (!load_spectrogram(join_and_prepare_filename(basedir, buffer),
 			&(train_data_for_silences->spectrograms[i].spectrogram),
@@ -2304,7 +2303,7 @@ int load_train_data(char* filename, char* basedir, char* datapart,
 			fprintf(stderr, "Data from the file `%s` are wrong!\n", filename);
 			break;
 		}
-		if (word_value->u.array.length <= 0)
+		if (word_value->u.array.length == 0)
 		{
 			ok = 0;
 			fprintf(stderr, "Data from the file `%s` are wrong!\n", filename);
@@ -2367,7 +2366,7 @@ int load_train_data(char* filename, char* basedir, char* datapart,
 				fprintf(stderr, "Data from the file `%s` are wrong!\n", filename);
 				break;
 			}
-			memset(buffer, 0, BUFFER_SIZE);
+			memset(buffer, 0, BUFFER_SIZE * sizeof(char));
 			strcpy(buffer, filename_value->u.string.ptr);
 			if (!load_spectrogram(join_and_prepare_filename(basedir, buffer),
 				&((*train_data_for_words)[i].spectrograms[j].spectrogram),
@@ -2473,7 +2472,7 @@ int load_interesting_words(char* filename, char*** interesting_words, int* numbe
 		fprintf(stderr, "File `%s` cannot be opened for reading!\n%s\n", filename, strerror(errno));
 		return 0;
 	}
-	memset(buffer, 0, BUFFER_SIZE);
+	memset(buffer, 0, BUFFER_SIZE * sizeof(char));
 	n = 0;
 	while (fgets(buffer, BUFFER_SIZE - 1, fp) != NULL)
 	{
@@ -2481,7 +2480,7 @@ int load_interesting_words(char* filename, char*** interesting_words, int* numbe
 		{
 			n += 1;
 		}
-		memset(buffer, 0, BUFFER_SIZE);
+		memset(buffer, 0, BUFFER_SIZE * sizeof(char));
 		if (feof(fp))
 		{
 			break;
@@ -2514,7 +2513,7 @@ int load_interesting_words(char* filename, char*** interesting_words, int* numbe
 			fprintf(stderr, "List of interesting words from the file `%s` is wrong!\n", filename);
 			break;
 		}
-		memset(buffer, 0, BUFFER_SIZE);
+		memset(buffer, 0, BUFFER_SIZE * sizeof(char));
 		if (fgets(buffer, BUFFER_SIZE - 1, fp) == NULL)
 		{
 			fprintf(stderr, "List of interesting words from the file `%s` is wrong!\n", filename);

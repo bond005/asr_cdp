@@ -204,7 +204,10 @@ int parse_cmd(int argc, char* argv[], char* parsed_args[])
 {
 	int i, j, k, mode = 0;
 	int* used_args;
-	memset(&parsed_args[0], 0, NUMBER_OF_ARG_TYPES);
+	for (i = 0; i < NUMBER_OF_ARG_TYPES; ++i)
+	{
+		parsed_args[i] = 0;
+	}
 	if (argc <= 1)
 	{
 		return mode;
@@ -215,7 +218,7 @@ int parse_cmd(int argc, char* argv[], char* parsed_args[])
 		fprintf(stderr, "Out of memory!\n");
 		return mode;
 	}
-	memset(used_args, 0, argc);
+	memset(used_args, 0, argc * sizeof(int));
 	used_args[0] = 1;
 	i = find_arg(argc, argv, "-t", used_args);
 	if (i < 0)
