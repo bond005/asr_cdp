@@ -20,8 +20,8 @@ typedef struct _TTrainDataForWord {
 float calculate_similarity(float spectrogram[], int spectrogram_size, int feature_vector_size,
 	float reference_spectrum[]);
 
-float find_reference_spectrum(float spectrogram[], int spectrogram_size, int feature_vector_size,
-	float reference_spectrum[], float tmp_dist_matrix[]);
+float find_reference_spectrum(float spectrogram[], int segment_start, int segment_end, int spectrogram_size,
+	int feature_vector_size, float reference_spectrum[], float tmp_dist_matrix[], int tmp_filled[]);
 
 int recognize_one_sound(float spectrogram[], int spectrogram_size, int feature_vector_size,
 	float silence_spectrums[], int number_of_silences,
@@ -40,7 +40,7 @@ float do_segmentation(float spectrogram[], int spectrogram_size, int feature_vec
 float do_self_segmentation(float spectrogram[], int spectrogram_size, int feature_vector_size,
 	float silence_spectrums[], int number_of_silences,
 	int speech_segments_number, int lengths_of_segments[],
-	float dp_matrix[], int dp_matrix_for_lengths[], float tmp_dist_matrix[]);
+	float dp_matrix[], int dp_matrix_for_lengths[], float tmp_dist_matrix[], int tmp_filled[]);
 
 int evaluate(TTrainDataForWord test_data[], int all_words_number,
 	int feature_vector_size, float silence_spectrums[], int number_of_silences,
@@ -55,7 +55,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 
 void select_best_references_for_words(TTrainDataForWord train_data[],
 	int vocabulary_size, int feature_vector_size, int segmentation[], float tmp_reference_spectrum[],
-	TReference references_vocabulary[], float tmp_dist_matrix[]);
+	TReference references_vocabulary[], float tmp_dist_matrix[], int tmp_filled[]);
 
 void find_optimal_bounds_of_references(TTrainDataForWord train_data[], int vocabulary_size, int segmentation[],
 	TReference references_vocabulary[]);

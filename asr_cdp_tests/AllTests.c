@@ -344,6 +344,54 @@ TTrainDataForWord train_data[] = {
 int number_of_words_for_training = 3;
 int number_of_speech_segments_for_words[] = {3, 2, 4};
 
+float _spectrograms_of_silences[] = {
+	0.099379488f, 0.685326555f, 0.201516072f,
+	0.036806757f, 0.432338797f, 0.868043224f,
+	0.409084736f, 0.044922138f, 0.780025069f,
+	0.97743581f, 0.564057143f, 0.407917267f,
+	0.91392123f, 0.218740213f, 0.600210561f,
+	0.036806757f, 0.432338797f, 0.868043224f,
+	0.815091326f, 0.941602077f, 0.08686225f,
+	0.036806757f, 0.432338797f, 0.868043224f,
+	0.289861092f, 0.073931114f, 0.106859004f,
+	0.418728879f, 0.01413205f, 0.257413197f,
+	0.036806757f, 0.432338797f, 0.868043224f,
+	0.128566637f, 0.127993898f, 0.050176792f,
+	0.236994248f, 0.759093245f, 0.886618732f,
+	0.036806757f, 0.432338797f, 0.868043224f,
+	0.424638819f, 0.972049024f, 0.112740778f,
+	0.036806757f, 0.432338797f, 0.868043224f,
+	0.855243746f, 0.105402421f, 0.143305597f,
+	0.684696935f, 0.524077124f, 0.641182245f,
+	0.036806757f, 0.432338797f, 0.868043224f,
+
+	1.973593783f, 1.792491679f, 1.038791935f,
+	1.622042866f, 1.057711219f, 1.802119219f,
+	1.915804108f, 1.522095753f, 1.458018305f,
+	1.978213755f, 1.772393218f, 1.796549891f,
+	1.410105464f, 1.943152894f, 1.420606421f,
+	1.622042866f, 1.057711219f, 1.802119219f,
+	1.373005413f, 1.380513202f, 1.944724729f,
+	1.68796549f, 1.646064031f, 1.444150179f,
+	1.622042866f, 1.057711219f, 1.802119219f,
+	1.032370369f, 1.926893072f, 1.738452475f,
+	1.139155528f, 1.46409143f, 1.8362796f,
+	1.185746053f, 1.676570167f, 1.367711343f,
+	1.622042866f, 1.057711219f, 1.802119219f,
+	1.915737595f, 1.260509975f, 1.033028691f,
+	1.060185957f, 1.148248245f, 1.3412652f,
+	1.622042866f, 1.057711219f, 1.802119219f
+};
+TSpectrogram spectrograms_of_silences[] = {
+	{ &_spectrograms_of_silences[0], 19 },
+    { &_spectrograms_of_silences[19 * 3], 16 }
+};
+TTrainDataForWord train_data_for_silences = {
+	NULL,
+    spectrograms_of_silences,
+	2
+};
+
 float *actual_spectrogram;
 int actual_spectrogram_length;
 int actual_spectrogram_feature_vector_size;
@@ -385,12 +433,15 @@ void test_find_reference_spectrum(CuTest *tc)
 	};
 	int i;
 	float tmp_dist_matrix[6 * 6];
+	int tmp_filled[6 * 6];
 	int spectrogram_size = 6, feature_vector_size = 3;
 	float expected_reference_spectrum[3] = {0.17889f, 0.64864f, 0.58093f};
 	float expected_similarity = -1.993627846127f;
 	float actual_reference_spectrum[3];
-	float actual_similarity = find_reference_spectrum(spectrogram, spectrogram_size, feature_vector_size,
-		actual_reference_spectrum, tmp_dist_matrix);
+	float actual_similarity;
+	memset(tmp_filled, 0, 6 * 6 * sizeof(int));
+	actual_similarity = find_reference_spectrum(spectrogram, 0, spectrogram_size - 1,
+		spectrogram_size, feature_vector_size, actual_reference_spectrum, tmp_dist_matrix, tmp_filled);
 	CuAssertDblEquals(tc, expected_similarity, actual_similarity, 1e-5);
 	for (i = 0; i < feature_vector_size; ++i)
 	{
@@ -501,13 +552,15 @@ void test_do_self_segmentation_01(CuTest *tc)
 {
 	int i;
 	float tmp_dist_matrix[22 * 22];
+	int tmp_filled[22 * 22];
 	float dp_matrix[22 * 6];
 	int lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float expected_similarity = -0.53366988f;
 	float actual_similarity = do_self_segmentation(input_spectrogram, size_of_input_spectrogram,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[2].n, lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
+		reference_words[2].n, lengths_of_segments, dp_matrix, dp_matrix_for_lengths,
+		tmp_dist_matrix, tmp_filled);
 	CuAssertDblEquals(tc, expected_similarity, actual_similarity, 1e-5);
 	for (i = 0; i < 6; ++i)
 	{
@@ -519,13 +572,15 @@ void test_do_self_segmentation_02(CuTest *tc)
 {
 	int i;
 	float tmp_dist_matrix[22 * 22];
+	int tmp_filled[22 * 22];
 	float dp_matrix[22 * 6];
 	int expected_length_of_segments[] = { 4, 1, 4, 1, 3 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float similarity = do_self_segmentation(train_data[0].spectrograms[0].spectrogram, train_data[0].spectrograms[0].n,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
+		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths,
+		tmp_dist_matrix, tmp_filled);
 	CuAssertTrue(tc, similarity > (-FLT_MAX / 2.0));
 	CuAssertTrue(tc, similarity <= 0.0);
 	for (i = 0; i < (reference_words[0].n + 2); ++i)
@@ -539,12 +594,14 @@ void test_do_self_segmentation_03(CuTest *tc)
 	int i;
 	float tmp_dist_matrix[22 * 22];
 	float dp_matrix[22 * 6];
+	int tmp_filled[22 * 22];
 	int expected_length_of_segments[] = { 5, 2, 7, 3, 5 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float similarity = do_self_segmentation(train_data[0].spectrograms[1].spectrogram, train_data[0].spectrograms[1].n,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
+		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths,
+		tmp_dist_matrix, tmp_filled);
 	CuAssertTrue(tc, similarity > (-FLT_MAX / 2.0));
 	CuAssertTrue(tc, similarity <= 0.0);
 	for (i = 0; i < (reference_words[0].n + 2); ++i)
@@ -557,13 +614,15 @@ void test_do_self_segmentation_04(CuTest *tc)
 {
 	int i;
 	float tmp_dist_matrix[22 * 22];
+	int tmp_filled[22 * 22];
 	float dp_matrix[22 * 6];
 	int expected_length_of_segments[] = { 6, 1, 5, 2, 2 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float similarity = do_self_segmentation(train_data[0].spectrograms[2].spectrogram, train_data[0].spectrograms[2].n,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
+		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths,
+		tmp_dist_matrix, tmp_filled);
 	CuAssertTrue(tc, similarity > (-FLT_MAX / 2.0));
 	CuAssertTrue(tc, similarity <= 0.0);
 	for (i = 0; i < (reference_words[0].n + 2); ++i)
@@ -576,13 +635,15 @@ void test_do_self_segmentation_05(CuTest *tc)
 {
 	int i;
 	float tmp_dist_matrix[22 * 22];
+	int tmp_filled[22 * 22];
 	float dp_matrix[22 * 6];
 	int expected_length_of_segments[] = { 2, 2, 6, 2, 7 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
 	float similarity = do_self_segmentation(train_data[0].spectrograms[3].spectrogram, train_data[0].spectrograms[3].n,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
-		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix);
+		reference_words[0].n, actual_lengths_of_segments, dp_matrix, dp_matrix_for_lengths,
+		tmp_dist_matrix, tmp_filled);
 	CuAssertTrue(tc, similarity > (-FLT_MAX / 2.0));
 	CuAssertTrue(tc, similarity <= 0.0);
 	for (i = 0; i < (reference_words[0].n + 2); ++i)
@@ -661,6 +722,22 @@ void test_compare_segmentation_02(CuTest *tc)
 	int actual = compare_segmentation(segmentation1, segmentation2,
 		train_data, number_of_speech_segments_for_words, number_of_words_for_training);
 	CuAssertIntEquals(tc, expected, actual);
+}
+
+void test_create_references_for_silences(CuTest *tc)
+{
+	int i;
+	if (actual_reference_silences != NULL)
+	{
+		free(actual_reference_silences);
+		actual_reference_silences = NULL;
+	}
+	actual_reference_silences = create_references_for_silences(train_data_for_silences, feature_vector_size_of_reference);
+	CuAssertPtrNotNull(tc, actual_reference_silences);
+	for (i = 0; i < (number_of_reference_silences * feature_vector_size_of_reference); ++i)
+	{
+		CuAssertDblEquals(tc, reference_silences[i], actual_reference_silences[i], 1e-5);
+	}
 }
 
 void test_create_references_for_words(CuTest *tc)
@@ -1265,6 +1342,7 @@ CuSuite* ASR_CDP_GetSuite()
 	SUITE_ADD_TEST(suite, test_do_self_segmentation_05);
 	SUITE_ADD_TEST(suite, test_compare_segmentation_01);
 	SUITE_ADD_TEST(suite, test_compare_segmentation_02);
+	SUITE_ADD_TEST(suite, test_create_references_for_silences);
 	SUITE_ADD_TEST(suite, test_create_references_for_words);
 	SUITE_ADD_TEST(suite, test_calculate_states_number_for_word);
 	SUITE_ADD_TEST(suite, test_join_and_prepare_filename_01);
