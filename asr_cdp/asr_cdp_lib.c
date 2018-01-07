@@ -989,11 +989,11 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 	}
 	quality = 0.0;
 	seg_start_pos = 0;
+	printf("Self-segmentation is started...");
 	for (word_index = 0; word_index < vocabulary_size; ++word_index)
 	{
 		res[word_index].n = number_of_states[word_index] - 2;
-		res[word_index].reference = (TReferenceItem*)malloc(sizeof(TReferenceItem) * 
-			res[word_index].n);
+		res[word_index].reference = (TReferenceItem*)malloc(sizeof(TReferenceItem) * res[word_index].n);
 		if (res[word_index].reference == NULL)
 		{
 			ok = 0;
@@ -1036,6 +1036,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 				dp_matrix, dp_matrix_for_lengths, tmp_dist_matrix, tmp_filled);
 		}
 		seg_start_pos += train_data[word_index].n * number_of_states[word_index];
+		printf("  Sounds of word \"%s\" have been processed...\n", train_data[word_index].wordname);
 	}
 	if (!ok)
 	{
@@ -1071,13 +1072,14 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 					dp_matrix, dp_matrix_for_lengths);
 			}
 			seg_start_pos += train_data[word_index].n * number_of_states[word_index];
+			printf("  Sounds of word \"%s\" have been processed...\n", train_data[word_index].wordname);
 		}
 		select_best_references_for_words(train_data, vocabulary_size, feature_vector_size, new_segmentation,
 			tmp_spectrum, res, tmp_dist_matrix, tmp_filled);
-		printf("  - quality of segmentation is %f;\n", quality);
+		printf("Quality of segmentation is %f.\n", quality);
 		segmentation_diff = compare_segmentation(old_segmentation, new_segmentation,
 			train_data, speech_segments_number_for_words, vocabulary_size);
-		printf("  - segmentations diff is %d.\n\n", segmentation_diff);
+		printf("Segmentations diff is %d.\n\n", segmentation_diff);
 		if (segmentation_diff <= 1)
 		{
 			printf("Segmentation is stabilized.\n");
@@ -1107,12 +1109,15 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 	int i, j, segment_start, segment_size, min_segment_size, max_segment_size;
 	float quality, best_quality;
 	seg_start_pos = 0;
+	printf("  Selection of best references is started...\n");
 	for (word_index = 0; word_index < vocabulary_size; ++word_index)
 	{
 		best_quality = -FLT_MAX;
 		number_of_states = references_vocabulary[word_index].n + 2;
+		printf("    Word \"%s\"...\n", references_vocabulary[word_index].wordname);
 		for (state_index = 1; state_index < (number_of_states - 1); ++state_index)
 		{
+			printf("      State %d...\n", state_index);
 			segment_start = 0;
 			for (j = 0; j < state_index; ++j)
 			{
@@ -1205,6 +1210,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 		}
 		seg_start_pos += train_data[word_index].n * number_of_states;
 	}
+	printf("  Selection of best references is finished...\n");
 }
 
 void find_optimal_bounds_of_references(TTrainDataForWord train_data[], int vocabulary_size, int segmentation[],
