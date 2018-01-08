@@ -423,7 +423,7 @@ float do_segmentation(float spectrogram[], int spectrogram_size, int feature_vec
 						&spectrogram[(time_index - m + 1) * feature_vector_size],
 						m, feature_vector_size,
 						reference.reference[state_index - 1].spectrum);
-					for (u = m + 1; u <= M; u++)
+					for (u = m + 1; u <= M; ++u)
 					{
 						if (((time_index - u) == -1) && (state_index == 1))
 						{
@@ -493,11 +493,19 @@ float do_segmentation(float spectrogram[], int spectrogram_size, int feature_vec
 			time_index = spectrogram_size - 1;
 			lengths_of_segments[state_index] = 
 				dp_matrix_for_lengths[time_index * states_number + state_index];
+			time_index -= lengths_of_segments[state_index];
 			for (state_index = states_number - 2; state_index >= 0; --state_index)
 			{
-				time_index -= lengths_of_segments[state_index + 1];
-				lengths_of_segments[state_index] =
-					dp_matrix_for_lengths[time_index * states_number + state_index];
+				if (time_index < 0)
+				{
+					lengths_of_segments[state_index] = 0;
+				}
+				else
+				{
+					lengths_of_segments[state_index] =
+						dp_matrix_for_lengths[time_index * states_number + state_index];
+					time_index -= lengths_of_segments[state_index];
+				}
 			}
 		}
 	}
@@ -883,7 +891,7 @@ TReference* create_references_for_words(TTrainDataForWord train_data[],
 		{
 			max_number_of_states = number_of_states[word_index];
 		}
-		n_seg += train_data[word_index].n * number_of_states[word_index];
+		n_seg += (train_data[word_index].n * number_of_states[word_index]);
         for (sound_index = 0; sound_index < train_data[word_index].n; ++sound_index)
 		{
 			if (train_data[word_index].spectrograms[sound_index].n > max_spectrogram_length)
@@ -1872,8 +1880,9 @@ char* join_and_prepare_filename(char *basedir, char* filename)
 int load_spectrogram(char* filename, float** spectrogram,
 	int* spectrogram_size, int* feature_vector_size)
 {
-	int i, ok = 1;
+	int ok = 1;
 	int32_t a, b;
+	size_t i, ndata;
 	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL)
 	{
@@ -1900,22 +1909,22 @@ int load_spectrogram(char* filename, float** spectrogram,
 	}
 	*spectrogram_size = a;
 	*feature_vector_size = b;
-	*spectrogram = (float*)malloc(*spectrogram_size * *feature_vector_size * sizeof(float));
+	ndata = (size_t)a * (size_t)b;
+	*spectrogram = (float*)malloc(ndata * sizeof(float));
 	if (*spectrogram == NULL)
 	{
 		fprintf(stderr, "Out of memory!\n");
 		fclose(fp);
 		return 0;
 	}
-	if (fread(*spectrogram, sizeof(float), *spectrogram_size * *feature_vector_size, fp) != 
-		(*spectrogram_size * *feature_vector_size))
+	if (fread(*spectrogram, sizeof(float), ndata, fp) != ndata)
 	{
 		fprintf(stderr, "File `%s` is wrong!\n", filename);
 		free(*spectrogram);
 		fclose(fp);
 		return 0;
 	}
-	for (i = 0; i < (*spectrogram_size * *feature_vector_size); ++i)
+	for (i = 0; i < ndata; ++i)
 	{
 		if ((*spectrogram)[i] < 0.0)
 		{
@@ -2398,6 +2407,14 @@ int load_train_data(char* filename, char* basedir, char* datapart,
 	}
 	json_value_free(value);
 	free(file_contents);
+	if (ok)
+	{
+		if (i != n)
+		{
+			ok = 0;
+			fprintf(stderr, "Not all spectrograms have been loaded. Expected %d, but got %d.\n", n, i);
+		}
+	}
 	if (!ok)
 	{
 		finalize_train_data_for_word(*train_data_for_silences);

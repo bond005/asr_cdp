@@ -31,9 +31,59 @@ float input_spectrogram[] = {
 	1.51039445f, 1.548338633f, 1.795786212f,
 	1.463585363f, 1.828421763f, 1.850302893f
 };
+float input_spectrogram_2[] = {
+	3.30106398f, 5.10531242f, 7.764311597f,
+	3.613836417f, 5.663155093f, 7.442975981f,
+	10.72116687f, 10.33361021f, 10.68473196f,
+	10.5180731f, 10.10881503f, 10.91532679f,
+	10.66391731f, 10.8334841f, 10.82630334f,
+	7.902745107f, 4.037920361f, 2.505474646f,
+	7.06879727f, 4.807981336f, 2.882949863f,
+	7.124402818f, 4.209992774f, 2.319300036f,
+	7.302486382f, 4.314877236f, 2.170684804f,
+	7.151841319f, 4.649747235f, 2.499002642f,
+	2.953991295f, 6.541024146f, 3.740091457f,
+	1.023471703f, 1.823567133f, 1.354247642f,
+	1.267328168f, 1.031676441f, 1.941409353f,
+	1.009840476f, 1.426213761f, 1.068586128f,
+	1.971877486f, 1.153642186f, 1.079470415f,
+	1.51039445f, 1.548338633f, 1.795786212f,
+	1.463585363f, 1.828421763f, 1.850302893f,
+	1.661343774f, 1.895540191f, 1.58082556f,
+	1.989696895f, 1.487300705f, 1.41231362f,
+	1.396295828f, 1.690109725f, 1.378582209f,
+	1.305205604f, 1.090862707f, 1.712547184f,
+	1.640117211f, 1.48297118f, 1.529128339f,
+};
+float input_spectrogram_3[] = {
+	1.661343774f, 1.895540191f, 1.58082556f,
+	1.989696895f, 1.487300705f, 1.41231362f,
+	1.396295828f, 1.690109725f, 1.378582209f,
+	1.305205604f, 1.090862707f, 1.712547184f,
+	1.640117211f, 1.48297118f, 1.529128339f,
+	1.023471703f, 1.823567133f, 1.354247642f,
+	1.267328168f, 1.031676441f, 1.941409353f,
+	1.009840476f, 1.426213761f, 1.068586128f,
+	1.971877486f, 1.153642186f, 1.079470415f,
+	1.51039445f, 1.548338633f, 1.795786212f,
+	1.463585363f, 1.828421763f, 1.850302893f,
+	3.30106398f, 5.10531242f, 7.764311597f,
+	3.613836417f, 5.663155093f, 7.442975981f,
+	10.72116687f, 10.33361021f, 10.68473196f,
+	10.5180731f, 10.10881503f, 10.91532679f,
+	10.66391731f, 10.8334841f, 10.82630334f,
+	7.902745107f, 4.037920361f, 2.505474646f,
+	7.06879727f, 4.807981336f, 2.882949863f,
+	7.124402818f, 4.209992774f, 2.319300036f,
+	7.302486382f, 4.314877236f, 2.170684804f,
+	7.151841319f, 4.649747235f, 2.499002642f,
+	2.953991295f, 6.541024146f, 3.740091457f
+};
 int size_of_input_spectrogram = 22;
 int word_class_of_input_spectrogram = 2;
-int segmentation_of_input_spectrogram[] = {5, 2, 3, 5, 1, 6};
+int segmentation_of_input_spectrogram[] = { 5, 2, 3, 5, 1, 6 };
+int segmentation_of_input_spectrogram_2[] = { 0, 2, 3, 5, 1, 11 };
+int segmentation_of_input_spectrogram_3[] = { 11, 2, 3, 5, 1, 0 };
 float best_similarity = -0.656212498f;
 
 int feature_vector_size_of_reference = 3;
@@ -480,6 +530,38 @@ void test_do_segmentation_02(CuTest *tc)
 {
 	int i;
 	float dp_matrix[22 * 6];
+	int lengths_of_segments[6];
+	int dp_matrix_for_lengths[22 * 6];
+	float actual_similarity = do_segmentation(input_spectrogram_2, size_of_input_spectrogram,
+		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
+		reference_words[2], lengths_of_segments, dp_matrix, dp_matrix_for_lengths);
+	CuAssertDblEquals(tc, best_similarity, actual_similarity, 1e-5);
+	for (i = 0; i < 6; ++i)
+	{
+		CuAssertIntEquals(tc, segmentation_of_input_spectrogram_2[i], lengths_of_segments[i]);
+	}
+}
+
+void test_do_segmentation_03(CuTest *tc)
+{
+	int i;
+	float dp_matrix[22 * 6];
+	int lengths_of_segments[6];
+	int dp_matrix_for_lengths[22 * 6];
+	float actual_similarity = do_segmentation(input_spectrogram_3, size_of_input_spectrogram,
+		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
+		reference_words[2], lengths_of_segments, dp_matrix, dp_matrix_for_lengths);
+	CuAssertDblEquals(tc, best_similarity, actual_similarity, 1e-5);
+	for (i = 0; i < 6; ++i)
+	{
+		CuAssertIntEquals(tc, segmentation_of_input_spectrogram_3[i], lengths_of_segments[i]);
+	}
+}
+
+void test_do_segmentation_04(CuTest *tc)
+{
+	int i;
+	float dp_matrix[22 * 6];
 	int expected_length_of_segments[] = { 4, 1, 4, 1, 3 };
 	int actual_lengths_of_segments[6];
 	int dp_matrix_for_lengths[22 * 6];
@@ -494,7 +576,7 @@ void test_do_segmentation_02(CuTest *tc)
 	}
 }
 
-void test_do_segmentation_03(CuTest *tc)
+void test_do_segmentation_05(CuTest *tc)
 {
 	int i;
 	float dp_matrix[22 * 6];
@@ -512,7 +594,7 @@ void test_do_segmentation_03(CuTest *tc)
 	}
 }
 
-void test_do_segmentation_04(CuTest *tc)
+void test_do_segmentation_06(CuTest *tc)
 {
 	int i;
 	float dp_matrix[22 * 6];
@@ -530,7 +612,7 @@ void test_do_segmentation_04(CuTest *tc)
 	}
 }
 
-void test_do_segmentation_05(CuTest *tc)
+void test_do_segmentation_07(CuTest *tc)
 {
 	int i;
 	float dp_matrix[22 * 6];
@@ -1335,6 +1417,8 @@ CuSuite* ASR_CDP_GetSuite()
 	SUITE_ADD_TEST(suite, test_do_segmentation_03);
 	SUITE_ADD_TEST(suite, test_do_segmentation_04);
 	SUITE_ADD_TEST(suite, test_do_segmentation_05);
+	SUITE_ADD_TEST(suite, test_do_segmentation_06);
+	SUITE_ADD_TEST(suite, test_do_segmentation_07);
 	SUITE_ADD_TEST(suite, test_do_self_segmentation_01);
 	SUITE_ADD_TEST(suite, test_do_self_segmentation_02);
 	SUITE_ADD_TEST(suite, test_do_self_segmentation_03);
