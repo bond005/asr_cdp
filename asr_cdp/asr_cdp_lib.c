@@ -1118,6 +1118,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 	int word_index, sound_index;
 	int number_of_states, state_index;
 	int i, j, segment_start, segment_size, min_segment_size, max_segment_size;
+	float mean_segment_length, std_segment_length, tmp;
 	float quality, best_quality;
 	seg_start_pos = 0;
 	printf("  Selection of best references is started...\n");
@@ -1136,6 +1137,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 			}
 			segment_start *= feature_vector_size;
 			segment_size = segmentation[seg_start_pos + state_index];
+			mean_segment_length = segment_size;
 			min_segment_size = segment_size;
 			max_segment_size = segment_size;
 			memset(tmp_filled, 0, segment_size * segment_size * sizeof(int));
@@ -1153,6 +1155,7 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 				}
 				segment_start *= feature_vector_size;
 				segment_size = segmentation[seg_start_pos + i * number_of_states + state_index];
+				mean_segment_length += segment_size;
 				if (segment_size > max_segment_size)
 				{
 					max_segment_size = segment_size;
@@ -1166,6 +1169,22 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 					feature_vector_size,
 					references_vocabulary[word_index].reference[state_index - 1].spectrum);
 			}
+			mean_segment_length /= (float)train_data[word_index].n;
+			tmp = segmentation[seg_start_pos + state_index] - mean_segment_length;
+			std_segment_length = tmp * tmp;
+			for (i = 1; i < train_data[word_index].n; i++)
+			{
+				segment_start = 0;
+				for (j = 0; j < state_index; ++j)
+				{
+					segment_start += segmentation[seg_start_pos + i * number_of_states + j];
+				}
+				segment_start *= feature_vector_size;
+				segment_size = segmentation[seg_start_pos + i * number_of_states + state_index];
+				tmp = segment_size - mean_segment_length;
+				std_segment_length += (tmp * tmp);
+			}
+			std_segment_length = sqrt(std_segment_length / (float)train_data[word_index].n);
 			for (sound_index = 1; sound_index < train_data[word_index].n; ++sound_index)
 			{
 				segment_start = 0;
@@ -1204,20 +1223,16 @@ void select_best_references_for_words(TTrainDataForWord train_data[],
 						tmp_reference_spectrum, sizeof(float) * feature_vector_size);
 				}
 			}
-			if (min_segment_size == max_segment_size)
+			references_vocabulary[word_index].reference[state_index - 1].m = (int)floor(mean_segment_length - 3.0 * std_segment_length);
+			if (references_vocabulary[word_index].reference[state_index - 1].m < min_segment_size)
 			{
-				if (min_segment_size > 1)
-				{
-					min_segment_size -= 1;
-				}
-				max_segment_size += 1;
+				references_vocabulary[word_index].reference[state_index - 1].m = min_segment_size;
 			}
-			references_vocabulary[word_index].reference[state_index - 1].m = min_segment_size / 2;
-			if (references_vocabulary[word_index].reference[state_index - 1].m < 1)
+			references_vocabulary[word_index].reference[state_index - 1].M = (int)ceil(mean_segment_length + 3.0 * std_segment_length);
+			if (references_vocabulary[word_index].reference[state_index - 1].M > max_segment_size)
 			{
-				references_vocabulary[word_index].reference[state_index - 1].m = 1;
+				references_vocabulary[word_index].reference[state_index - 1].M = max_segment_size;
 			}
-			references_vocabulary[word_index].reference[state_index - 1].M = max_segment_size * 2;
 		}
 		seg_start_pos += train_data[word_index].n * number_of_states;
 	}
@@ -1230,6 +1245,7 @@ void find_optimal_bounds_of_references(TTrainDataForWord train_data[], int vocab
 	int seg_start_pos;
 	int word_index, sound_index, state_index, number_of_states;
 	int segment_length, max_segment_length, min_segment_length;
+	float mean_segment_length, std_segment_length, tmp;
 	seg_start_pos = 0;
 	for (word_index = 0; word_index < vocabulary_size; ++word_index)
 	{
@@ -1240,9 +1256,11 @@ void find_optimal_bounds_of_references(TTrainDataForWord train_data[], int vocab
 			segment_length = segmentation[seg_start_pos + sound_index * number_of_states + state_index];
 			max_segment_length = segment_length;
 			min_segment_length = segment_length;
+			mean_segment_length = segment_length;
 			for (sound_index = 1; sound_index < train_data[word_index].n; ++sound_index)
 			{
 				segment_length = segmentation[seg_start_pos + sound_index * number_of_states + state_index];
+				mean_segment_length += segment_length;
 				if (segment_length > max_segment_length)
 				{
 					max_segment_length = segment_length;
@@ -1252,8 +1270,28 @@ void find_optimal_bounds_of_references(TTrainDataForWord train_data[], int vocab
 					min_segment_length = segment_length;
 				}
 			}
-			references_vocabulary[word_index].reference[state_index - 1].m = min_segment_length;
-			references_vocabulary[word_index].reference[state_index - 1].M = max_segment_length;
+			mean_segment_length /= (float)train_data[word_index].n;
+			sound_index = 0;
+			segment_length = segmentation[seg_start_pos + sound_index * number_of_states + state_index];
+			tmp = segment_length - mean_segment_length;
+			std_segment_length = tmp * tmp;
+			for (sound_index = 1; sound_index < train_data[word_index].n; ++sound_index)
+			{
+				segment_length = segmentation[seg_start_pos + sound_index * number_of_states + state_index];
+				tmp = segment_length - mean_segment_length;
+				std_segment_length += (tmp * tmp);
+			}
+			std_segment_length = sqrt(std_segment_length / (float)train_data[word_index].n);
+			references_vocabulary[word_index].reference[state_index - 1].m = (int)floor(mean_segment_length - std_segment_length);
+			references_vocabulary[word_index].reference[state_index - 1].M = (int)ceil(mean_segment_length + std_segment_length);
+			if (references_vocabulary[word_index].reference[state_index - 1].m < min_segment_length)
+			{
+				references_vocabulary[word_index].reference[state_index - 1].m = min_segment_length;
+			}
+			if (references_vocabulary[word_index].reference[state_index - 1].M > max_segment_length)
+			{
+				references_vocabulary[word_index].reference[state_index - 1].M = max_segment_length;
+			}
 		}
 		seg_start_pos += train_data[word_index].n * number_of_states;
 	}
@@ -1926,7 +1964,7 @@ int load_spectrogram(char* filename, float** spectrogram,
 	}
 	for (i = 0; i < ndata; ++i)
 	{
-		if ((*spectrogram)[i] < 0.0)
+		if ((*spectrogram)[i] < (-FLT_MAX / 2.0))
 		{
 			ok = 0;
 			break;
