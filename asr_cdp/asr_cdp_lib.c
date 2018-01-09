@@ -138,7 +138,7 @@ int recognize_one_sound(float spectrogram[], int spectrogram_size, int feature_v
 	int best_word_index = -1;
 	int ok;
 	float best_word_similarity = -FLT_MAX;
-	for (word_index = 0; word_index < vocabulary_size; ++word_index)
+	for (word_index = 0; word_index <= vocabulary_size; ++word_index)
 	{
 		best_similarities[word_index] = -FLT_MAX;
 	}
@@ -238,8 +238,10 @@ int recognize_one_sound(float spectrogram[], int spectrogram_size, int feature_v
 			state_index = states_number - 1;
 			similarities[word_index] = dp_matrix[time_index * states_number + state_index];
 		}
+		similarities[vocabulary_size] = calculate_similarity(spectrogram, spectrogram_size, feature_vector_size,
+			&silence_spectrums[silence_index * feature_vector_size]);
 		ok = 0;
-		for (word_index = 0; word_index < vocabulary_size; ++word_index)
+		for (word_index = 0; word_index <= vocabulary_size; ++word_index)
 		{
 			if (similarities[word_index] > best_word_similarity)
 			{
@@ -250,7 +252,7 @@ int recognize_one_sound(float spectrogram[], int spectrogram_size, int feature_v
 		}
 		if (ok > 0)
 		{
-			for (word_index = 0; word_index < vocabulary_size; ++word_index)
+			for (word_index = 0; word_index <= vocabulary_size; ++word_index)
 			{
 				best_similarities[word_index] = similarities[word_index];
 				if (best_similarities[word_index] > (-FLT_MAX / 2))
@@ -305,8 +307,8 @@ int recognize_all(TSpectrogram spectrograms[], int spectrograms_number,
 	fprintf(fp, "\n");
 	max_number_of_states += 2;
 	dp_matrix = (float*)malloc(max_spectrogram_size * max_number_of_states * sizeof(float));
-	similarities = (float*)malloc(feature_vector_size * sizeof(float));
-	best_similarities = (float*)malloc(feature_vector_size * sizeof(float));
+	similarities = (float*)malloc((vocabulary_size + 1) * sizeof(float));
+	best_similarities = (float*)malloc((vocabulary_size + 1) * sizeof(float));
 	if ((dp_matrix == NULL) || (similarities == NULL) || (best_similarities == NULL))
 	{
 		if (dp_matrix != NULL)

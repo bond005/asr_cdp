@@ -86,6 +86,9 @@ int segmentation_of_input_spectrogram_2[] = { 0, 2, 3, 5, 1, 11 };
 int segmentation_of_input_spectrogram_3[] = { 11, 2, 3, 5, 1, 0 };
 float best_similarity = -0.656212498f;
 
+int word_class_of_silence_spectrogram = 3;
+float best_similarity_for_silence = -0.550722353042f;
+
 int feature_vector_size_of_reference = 3;
 
 float reference_silences[] = {
@@ -499,15 +502,26 @@ void test_find_reference_spectrum(CuTest *tc)
 	}
 }
 
-void test_recognize_one_sound(CuTest *tc)
+void test_recognize_one_sound_01(CuTest *tc)
 {
 	float dp_matrix[22 * 6];
-	float similarities[3], best_similarities[3];
+	float similarities[4], best_similarities[4];
 	int predicted_index = recognize_one_sound(input_spectrogram, size_of_input_spectrogram,
 		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
 		reference_words, number_of_reference_words, best_similarities, similarities, dp_matrix);
 	CuAssertIntEquals(tc, word_class_of_input_spectrogram, predicted_index);
 	CuAssertDblEquals(tc, best_similarity, best_similarities[word_class_of_input_spectrogram], 1e-5);
+}
+
+void test_recognize_one_sound_02(CuTest *tc)
+{
+	float dp_matrix[16 * 6];
+	float similarities[4], best_similarities[4];
+	int predicted_index = recognize_one_sound(&_spectrograms_of_silences[19 * 3], 16,
+		feature_vector_size_of_reference, reference_silences, number_of_reference_silences,
+		reference_words, number_of_reference_words, best_similarities, similarities, dp_matrix);
+	CuAssertIntEquals(tc, word_class_of_silence_spectrogram, predicted_index);
+	CuAssertDblEquals(tc, best_similarity_for_silence, best_similarities[word_class_of_silence_spectrogram], 1e-5);
 }
 
 void test_do_segmentation_01(CuTest *tc)
@@ -1411,7 +1425,8 @@ CuSuite* ASR_CDP_GetSuite()
 	CuSuite* suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, test_calculate_similarity);
 	SUITE_ADD_TEST(suite, test_find_reference_spectrum);
-	SUITE_ADD_TEST(suite, test_recognize_one_sound);
+	SUITE_ADD_TEST(suite, test_recognize_one_sound_01);
+	SUITE_ADD_TEST(suite, test_recognize_one_sound_02);
 	SUITE_ADD_TEST(suite, test_do_segmentation_01);
 	SUITE_ADD_TEST(suite, test_do_segmentation_02);
 	SUITE_ADD_TEST(suite, test_do_segmentation_03);
