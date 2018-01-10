@@ -719,14 +719,14 @@ int evaluate(TTrainDataForWord test_data[], int all_words_number,
 		fprintf(stderr, "There are no interesting words in data for testing!\n");
 		return 0;
 	}
-	confusion_matrix = (int*)malloc(vocabulary_size * vocabulary_size * sizeof(int));
+	confusion_matrix = (int*)malloc((vocabulary_size + 1) * (vocabulary_size + 1) * sizeof(int));
 	if (confusion_matrix == NULL)
 	{
 		fprintf(stderr, "Out of memory!\n");
 		finalize_interesting_words(interesting_words, vocabulary_size);
 		return 0;
 	}
-	memset(confusion_matrix, 0, vocabulary_size * vocabulary_size * sizeof(int));
+	memset(confusion_matrix, 0, (vocabulary_size + 1) * (vocabulary_size + 1) * sizeof(int));
 	dp_matrix = (float*)malloc(max_states_number * max_spectrogram_size * sizeof(float));
 	if (dp_matrix == NULL)
 	{
@@ -735,7 +735,7 @@ int evaluate(TTrainDataForWord test_data[], int all_words_number,
 		free(confusion_matrix);
 		return 0;
 	}
-	similarities = (float*)malloc(feature_vector_size * sizeof(float));
+	similarities = (float*)malloc((vocabulary_size + 1) * sizeof(float));
 	if (similarities == NULL)
 	{
 		fprintf(stderr, "Out of memory!\n");
@@ -744,7 +744,7 @@ int evaluate(TTrainDataForWord test_data[], int all_words_number,
 		free(dp_matrix);
 		return 0;
 	}
-	best_similarities = (float*)malloc(feature_vector_size * sizeof(float));
+	best_similarities = (float*)malloc((vocabulary_size + 1) * sizeof(float));
 	if (best_similarities == NULL)
 	{
 		fprintf(stderr, "Out of memory!\n");
@@ -769,7 +769,7 @@ int evaluate(TTrainDataForWord test_data[], int all_words_number,
 			}
 		}
 	}
-	for (i = 0; i < vocabulary_size; ++i)
+	for (i = 0; i <= vocabulary_size; ++i)
 	{
 		corrects += confusion_matrix[i * vocabulary_size + i];
 		for (j = 0; j < vocabulary_size; ++j)
@@ -784,17 +784,23 @@ int evaluate(TTrainDataForWord test_data[], int all_words_number,
 		{
 			printf("\t\t%s", references_of_words[i].wordname);
 		}
-		printf("\n");
+		printf("\t\t<sil>\n");
 		for (i = 0; i < vocabulary_size; ++i)
 		{
 			printf("%s", references_of_words[i].wordname);
-			for (j = 0; j < vocabulary_size; ++j)
+			for (j = 0; j <= vocabulary_size; ++j)
 			{
 				printf("\t\t%d", confusion_matrix[i * vocabulary_size + j]);
 			}
 			printf("\n");
 		}
-		printf("\n");
+		i = vocabulary_size;
+		printf("<sil>");
+		for (j = 0; j <= vocabulary_size; ++j)
+		{
+			printf("\t\t%d", confusion_matrix[i * vocabulary_size + j]);
+		}
+		printf("\n\n");
 	}
 	free(confusion_matrix);
 	finalize_interesting_words(interesting_words, vocabulary_size);
